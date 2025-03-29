@@ -69,22 +69,25 @@ class SetAppointmentWindow(customtkinter.CTk):
         # Doctor Dropdown
         ttk.Label(form_frame, text="Doctor:").pack(anchor="w")
         cursor = self.conn.cursor()
-        cursor.execute("SELECT name FROM Doctors")
-        rows = cursor.fetchall()
-        doctor_list = [row[0] for row in rows]
+        cursor.execute("SELECT doctor_id, name FROM Doctors")
+        self.doctor_dict = {name: doc_id for doc_id, name in cursor}
+        doctor_names = list(self.doctor_dict.keys())
 
-        if not doctor_list:
-            doctor_list = ["No doctors found"]
+        if not doctor_names:
+         doctor_names = ["No doctors found"]
+         self.doctor_dict = {"No doctors found": -1}
 
         self.doctor_var = StringVar()
-        self.doctor_var.set(doctor_list[0])
-
-        self.doctor_combo = ttk.Combobox(form_frame, textvariable=self.doctor_var, values=doctor_list)
+        self.doctor_var.set(doctor_names[0])
+        
+        self.doctor_combo = ttk.Combobox(form_frame, textvariable=self.doctor_var, values=doctor_names)
         self.doctor_combo.pack(fill="x", pady=5)
+  
+  
+  
 
-        # (İsteğe bağlı: Ekstra dropdown - gerekliyse)
-        dropdown = OptionMenu(form_frame, self.doctor_var, *doctor_list)
-        dropdown.pack(fill="x", pady=5)
+
+
 
         # Problem Description
         ttk.Label(form_frame, text="Describe the Problem:").pack(anchor="w")
@@ -105,7 +108,8 @@ class SetAppointmentWindow(customtkinter.CTk):
         except ValueError:
             print("Invalid patient ID.")
             return
-
+        doctor_name = self.doctor_var.get()  # önce isim alınır
+        doctor_id = self.doctor_dict.get(doctor_name, -1)  # sonra ID alınır
         date = self.date_entry.get()
         start = self.start_entry.get()
         end = self.end_entry.get()
@@ -126,11 +130,9 @@ class SetAppointmentWindow(customtkinter.CTk):
         print("Appointment submitted:")
         print(f"Patient ID: {patient_id}")
         print(f"Date: {date}, Time: {start} - {end}")
-        print(f"Doctor: {doctor_name}")
+        print(f"Doctor: {doctor_id}")
         print(f"Problem: {problem}")
 
-        # Dummy doctor_id (gerçek veritabanı ilişkilendirmesi gerekebilir)
-        doctor_id = 1
 
         appointment = Appointments(
             patient_id=patient_id,
