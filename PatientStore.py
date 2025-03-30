@@ -21,10 +21,10 @@ class AppointmentStore:
     def __init__(self, db):
         self.db = db
 
-    def create(self, appointment):  # <-- DİKKAT: bu def artık sınıfın İÇİNDE ✅
+    def create(self, appointment):  
         cur = self.db.cursor()
 
-        # Çakışan randevu var mı kontrol et
+   
         cur.execute("""
             SELECT * FROM Appointments
             WHERE doctor_id = ?
@@ -46,7 +46,7 @@ class AppointmentStore:
 
         conflict = cur.fetchone()
         if conflict:
-            print("Randevu çakışması: Bu saat aralığında zaten bir randevu var.")
+            print("Time clash")
             return False
 
         cur.execute("""
@@ -62,7 +62,7 @@ class AppointmentStore:
         ))
 
         self.db.commit()
-        print("Randevu başarıyla eklendi.")
+        print("Appointment Successfuly added")
         return True
 
     def read_all(self):

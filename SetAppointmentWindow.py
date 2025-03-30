@@ -1,151 +1,129 @@
-import tkinter
 import customtkinter
-from tkinter import ttk
-from AppointmentStore import *
-from tkinter import *
+from tkinter import StringVar
+from DoctorStore import *
+from AppointmentStore import Appointments, AppointmentStore
+import re
+from datetime import datetime
 
-class SetAppointmentWindow(customtkinter.CTk):  
+class SetAppointmentWindow:
     def __init__(self, conn):
-        super().__init__()
         self.conn = conn
         self.appointment_store = AppointmentStore(self.conn)
+        self.doc_store = DoctorStore(self.conn)
 
-        self.title("Set Appointment")
-        self.geometry("600x600")
+    def show(self):
+        window = customtkinter.CTkToplevel()
+        window.title("Randevu Ekle")
+        window.geometry("400x550")
 
-        # Form frame
-        form_frame = ttk.Frame(self)
-        form_frame.pack(padx=20, pady=20, fill="x")
-
-        # Validasyon fonksiyonları
         def only_letters(input_str):
             return input_str.isalpha() or input_str == ""
 
         def only_numbers(input_str):
             return input_str.isdigit() or input_str == ""
 
-        def validate_date_format(date_str):
-            import re
-            pattern = r"^\d{4}-\d{2}-\d{2}$"
-            return re.match(pattern, date_str) is not None
-
         def valid_date_input(new_value):
-            import re
             return re.match(r"^[0-9\-]*$", new_value) is not None
 
         def valid_time_input(new_value):
-            import re
             return re.match(r"^[0-9:]*$", new_value) is not None
 
-        # Validasyon bağlamaları
-        vcmd_letters = (self.register(only_letters), '%P')
-        vcmd_numbers = (self.register(only_numbers), '%P')
-        vcmd_date = (self.register(valid_date_input), '%P')
-        vcmd_time = (self.register(valid_time_input), '%P')
-
-        # ID
-        ttk.Label(form_frame, text="Patient ID:").pack(anchor="w")
-        self.id_entry = ttk.Entry(form_frame, validate="key", validatecommand=vcmd_numbers)
-        self.id_entry.pack(fill="x", pady=5)
-
-        # Date
-        ttk.Label(form_frame, text="Date (YYYY-MM-DD):").pack(anchor="w")
-        self.date_entry = ttk.Entry(form_frame, validate="key", validatecommand=vcmd_date)
-        self.date_entry.pack(fill="x", pady=5)
-
-        self.date_error_label = ttk.Label(form_frame, text="", foreground="red")
-        self.date_error_label.pack(anchor="w")
-
-        # Start Time
-        ttk.Label(form_frame, text="Start Time (HH:MM):").pack(anchor="w")
-        self.start_entry = ttk.Entry(form_frame, validate="key", validatecommand=vcmd_time)
-        self.start_entry.pack(fill="x", pady=5)
-
-        # End Time
-        ttk.Label(form_frame, text="End Time (HH:MM):").pack(anchor="w")
-        self.end_entry = ttk.Entry(form_frame, validate="key", validatecommand=vcmd_time)
-        self.end_entry.pack(fill="x", pady=5)
-
-        # Doctor Dropdown
-        ttk.Label(form_frame, text="Doctor:").pack(anchor="w")
-        cursor = self.conn.cursor()
-        cursor.execute("SELECT doctor_id, name FROM Doctors")
-        self.doctor_dict = {name: doc_id for doc_id, name in cursor}
-        doctor_names = list(self.doctor_dict.keys())
-
-        if not doctor_names:
-         doctor_names = ["No doctors found"]
-         self.doctor_dict = {"No doctors found": -1}
-
-        self.doctor_var = StringVar()
-        self.doctor_var.set(doctor_names[0])
-        
-        self.doctor_combo = ttk.Combobox(form_frame, textvariable=self.doctor_var, values=doctor_names)
-        self.doctor_combo.pack(fill="x", pady=5)
-  
-  
-  
-
-
-
-
-        # Problem Description
-        ttk.Label(form_frame, text="Describe the Problem:").pack(anchor="w")
-        self.problem_text = tkinter.Text(form_frame, height=4)
-        self.problem_text.pack(fill="x", pady=5)
-
-        # Submit Button
-        self.submit_btn = customtkinter.CTkButton(
-            self,
-            text="Submit Appointment",
-            command=self.submit_appointment
-        )
-        self.submit_btn.pack(pady=20)
-
-    def submit_appointment(self):
-        try:
-            patient_id = int(self.id_entry.get())
-        except ValueError:
-            print("Invalid patient ID.")
-            return
-        doctor_name = self.doctor_var.get()  # önce isim alınır
-        doctor_id = self.doctor_dict.get(doctor_name, -1)  # sonra ID alınır
-        date = self.date_entry.get()
-        start = self.start_entry.get()
-        end = self.end_entry.get()
-        doctor_name = self.doctor_var.get()
-        problem = self.problem_text.get("1.0", "end").strip()
-
         def validate_date_format(date_str):
-            import re
-            pattern = r"^\d{4}-\d{2}-\d{2}$"
-            return re.match(pattern, date_str) is not None
+            try:
+                date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                return date_obj.year == 2025
+            except ValueError:
+                return False
 
-        if not validate_date_format(date):
-            self.date_error_label.config(text="Date must be in YYYY-MM-DD format")
-            return
-        else:
-            self.date_error_label.config(text="")
+        def validate_time_format(time_str):
+            try:
+                dt = datetime.strptime(time_str, "%H:%M")
+                hour, minute = dt.hour, dt.minute
+                return 0 <= hour <= 23 and 0 <= minute <= 59
+            except ValueError:
+                return False
 
-        print("Appointment submitted:")
-        print(f"Patient ID: {patient_id}")
-        print(f"Date: {date}, Time: {start} - {end}")
-        print(f"Doctor: {doctor_id}")
-        print(f"Problem: {problem}")
+        vcmd_letters = (window.register(only_letters), '%P')
+        vcmd_numbers = (window.register(only_numbers), '%P')
+        vcmd_date = (window.register(valid_date_input), '%P')
+        vcmd_time = (window.register(valid_time_input), '%P')
 
+        # Doktorları çek
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT name, surname FROM Doctors")
+        rows = cursor.fetchall()
+        doctor_list = [f"{row[0]} {row[1]}" for row in rows]
+        if not doctor_list:
+            doctor_list = ["No doctors found"]
 
-        appointment = Appointments(
-            patient_id=patient_id,
-            doctor_id=doctor_id,
-            appointment_date=date,
-            start_time=start,
-            end_time=end,
-            description=problem
-        )
+        selected_doctor = StringVar(value=doctor_list[0])
 
-        self.appointment_store.create(appointment)
-        print("Appointment saved to database.")
+        # UI bileşenleri
+        customtkinter.CTkLabel(window, text="Select Doctor", font=("Arial", 14)).pack(pady=10)
+        dropdown = customtkinter.CTkOptionMenu(window, variable=selected_doctor, values=doctor_list)
+        dropdown.pack(pady=5)
 
-    def show(self):
-        self.lift()
-        self.deiconify()
+        customtkinter.CTkLabel(window, text="Tarih (YYYY-MM-DD)").pack(pady=5)
+        date_entry = customtkinter.CTkEntry(window, validate="key", validatecommand=vcmd_date)
+        date_entry.pack()
+
+        customtkinter.CTkLabel(window, text="Beginning time (HH:MM)").pack(pady=5)
+        start_entry = customtkinter.CTkEntry(window, validate="key", validatecommand=vcmd_time)
+        start_entry.pack()
+
+        customtkinter.CTkLabel(window, text="Ending time (HH:MM)").pack(pady=5)
+        end_entry = customtkinter.CTkEntry(window, validate="key", validatecommand=vcmd_time)
+        end_entry.pack()
+
+        customtkinter.CTkLabel(window, text="Description").pack(pady=5)
+        desc_entry = customtkinter.CTkEntry(window)
+        desc_entry.pack()
+
+        error_label = customtkinter.CTkLabel(window, text="", text_color="red")
+        error_label.pack(pady=5)
+
+        def handle_submit():
+            full_name = selected_doctor.get()
+            date = date_entry.get()
+            start = start_entry.get()
+            end = end_entry.get()
+            desc = desc_entry.get()
+
+            if not doctor_list:
+              error_label.configure(text="Doktor bulunamadı.")
+              return
+
+            if not validate_date_format(date):
+                error_label.configure(text="Invalid time")
+                return
+
+            if not validate_time_format(start) or not validate_time_format(end):
+                error_label.configure(text="Time format is invalid")
+                return
+
+            try:
+                name, surname = full_name.split(" ", 1)
+                doctor_id = self.doc_store.find_id_by_name(name, surname)
+
+                if doctor_id is None:
+                    error_label.configure(text="No doctors found")
+                    return
+
+                appointment = Appointments(
+                    patient_id=123,
+                    doctor_id=doctor_id,
+                    appointment_date=date,
+                    start_time=start,
+                    end_time=end,
+                    description=desc
+                )
+
+                self.appointment_store.create(appointment)
+                print("Appointment created successfully")
+                window.destroy()
+
+            except Exception as e:
+                error_label.configure(text=f"Hata: {e}")
+
+        submit_btn = customtkinter.CTkButton(window, text="Create Appointment", command=handle_submit)
+        submit_btn.pack(pady=15)

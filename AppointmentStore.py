@@ -23,10 +23,10 @@ class AppointmentStore:
     def __init__(self, db):
         self.db = db
 
-    def create(self, appointment):  # <-- DİKKAT: bu def artık sınıfın İÇİNDE ✅
+    def create(self, appointment):  
         cur = self.db.cursor()
 
-        # Çakışan randevu var mı kontrol et
+   
         cur.execute("""
             SELECT * FROM Appointments
             WHERE doctor_id = ?
