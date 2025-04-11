@@ -19,11 +19,11 @@ class SetAppointmentWindow:
 
         def on_close():
             self.window.destroy()
-            # Let your main app set this window reference to None
+     
 
         self.window.protocol("WM_DELETE_WINDOW", on_close)
 
-        # Input validators
+    
         def only_numbers(input_str):
             return input_str.isdigit() or input_str == ""
 
@@ -47,19 +47,19 @@ class SetAppointmentWindow:
             except ValueError:
                 return False
 
-        # Register input validation
+
         vcmd_numbers = (self.window.register(only_numbers), '%P')
         vcmd_date = (self.window.register(valid_date_input), '%P')
         vcmd_time = (self.window.register(valid_time_input), '%P')
 
-        # Fetch doctor list
+   
         cursor = self.conn.cursor()
         cursor.execute("SELECT name, surname FROM Doctors")
         rows = cursor.fetchall()
         doctor_list = [f"{row[0]} {row[1]}" for row in rows] or ["No doctors found"]
         selected_doctor = StringVar(value=doctor_list[0])
 
-        # UI Elements
+      
         customtkinter.CTkLabel(self.window, text="Select Doctor", font=("Arial", 14)).pack(pady=10)
         dropdown = customtkinter.CTkOptionMenu(self.window, variable=selected_doctor, values=doctor_list)
         dropdown.pack(pady=5)
@@ -90,14 +90,14 @@ class SetAppointmentWindow:
         def handle_submit():
             print(">>> Submit clicked!")
 
-            # Validate patient ID
+         
             try:
                 patient_id = int(patient_id_entry.get())
             except ValueError:
                 error_label.configure(text="Invalid patient ID")
                 return
 
-            # Ensure patient exists
+
             cur = self.conn.cursor()
             cur.execute("SELECT * FROM Patients WHERE patient_id = ?", (patient_id,))
             patient = cur.fetchone()
@@ -105,24 +105,24 @@ class SetAppointmentWindow:
                 error_label.configure(text="Patient not found")
                 return
 
-            # Collect form inputs
+          
             full_name = selected_doctor.get()
             date = date_entry.get()
             start = start_entry.get()
             end = end_entry.get()
             desc = desc_entry.get()
 
-            # Validate date
+        
             if not validate_date_format(date):
                 error_label.configure(text="Invalid date format (YYYY-MM-DD, year must be 2025)")
                 return
 
-            # Validate time format
+        
             if not validate_time_format(start) or not validate_time_format(end):
                 error_label.configure(text="Invalid time format (HH:MM)")
                 return
 
-            # Check if start time is before end time
+
             start_dt = datetime.strptime(start, "%H:%M")
             end_dt = datetime.strptime(end, "%H:%M")
             if start_dt >= end_dt:
@@ -130,7 +130,7 @@ class SetAppointmentWindow:
                 return
 
             try:
-                # Find doctor ID
+          
                 parts = full_name.strip().split(" ")
                 name = " ".join(parts[:-1])
                 surname = parts[-1]
@@ -140,7 +140,7 @@ class SetAppointmentWindow:
                     error_label.configure(text="Doctor not found")
                     return
 
-                # Create appointment object
+     
                 appointment = Appointments(
                     patient_id=patient_id,
                     doctor_id=doctor_id,
@@ -150,7 +150,7 @@ class SetAppointmentWindow:
                     description=desc
                 )
 
-                # Try to insert into DB
+             
                 success = self.appointment_store.create(appointment)
 
                 if success:
@@ -163,5 +163,5 @@ class SetAppointmentWindow:
                 print(f">>> EXCEPTION in handle_submit: {e}")
                 error_label.configure(text=f"Error: {e}")
 
-        # Submit button
+       
         customtkinter.CTkButton(self.window, text="Create Appointment", command=handle_submit).pack(pady=15)
