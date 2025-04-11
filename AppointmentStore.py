@@ -16,7 +16,7 @@ class AppointmentStore:
         cur = self.db.cursor()
         try:
             if appointment.start_time >= appointment.end_time:
-                print(">>> Warning: Beginning hours cant be ahead from Ending hours")
+                print(">>> Warning: Beginning hours can't be ahead of Ending hours")
                 return False
 
             print(f">>> Checking for conflicts on {appointment.appointment_date} "
@@ -56,7 +56,7 @@ class AppointmentStore:
             ))
 
             self.db.commit()
-            print(">>> Randevu başarıyla eklendi.")
+            print(">>> Appointment successfully added.")
             return True
 
         except Exception as db_error:
@@ -94,3 +94,12 @@ class AppointmentStore:
             WHERE a.doctor_id = ?
         """, (doctor_id,))
         return res.fetchall()
+    
+    def delete_by_patient_id(self, patient_id):
+        cur = self.db.cursor()
+        cur.execute("DELETE FROM Appointments WHERE patient_id = ?", (patient_id,))
+        self.db.commit()
+        return cur.rowcount > 0  # En az 1 satır silindiyse True döner
+
+
+
