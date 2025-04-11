@@ -19,11 +19,10 @@ class DoctorLoginWindow:
 
         vcmd_numbers = (window.register(only_numbers), '%P')
 
-        # Giriş başlığı
+
         label = customtkinter.CTkLabel(window, text="Enter Doctor ID:")
         label.pack(pady=10)
 
-        # ID giriş kutusu
         self.doc_id_var = StringVar()
         self.doc_id_entry = customtkinter.CTkEntry(
             window,
