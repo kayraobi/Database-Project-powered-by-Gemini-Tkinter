@@ -8,12 +8,11 @@ class PatientCreateWindow:
         self.patient_store = PatientStore(self.conn)
 
     def show(self):
-        # Yeni pencere oluştur
+
         window = customtkinter.CTkToplevel()
         window.title("Randevu Ekle")
         window.geometry("400x550")
 
-        # Form elemanları yeni pencereye (window) ekleniyor
         form_frame = customtkinter.CTkFrame(window)
         form_frame.pack(padx=20, pady=20)
 
