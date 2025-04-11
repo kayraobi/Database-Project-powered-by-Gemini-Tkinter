@@ -99,7 +99,7 @@ class AppointmentStore:
         cur = self.db.cursor()
         cur.execute("DELETE FROM Appointments WHERE patient_id = ?", (patient_id,))
         self.db.commit()
-        return cur.rowcount > 0  # En az 1 satır silindiyse True döner
+        return cur.rowcount > 0  
 
 
 
